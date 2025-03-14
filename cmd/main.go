@@ -1,0 +1,139 @@
+package main
+
+import (
+	"context"
+	"crypto/tls"
+	"errors"
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jessevdk/go-flags"
+	"github.com/mhpenta/app"
+	"github.com/rs/cors"
+	"golang.org/x/crypto/acme/autocert"
+	"log/slog"
+	"net/http"
+	"os"
+	"time"
+	"youtubeMonitor/internal/config"
+	"youtubeMonitor/internal/database"
+	"youtubeMonitor/internal/database/repo"
+	"youtubeMonitor/internal/routes"
+)
+
+// Options defines command-line options for the application
+type Options struct {
+	ConfigPath string `short:"c" long:"config" description:"Path to configuration file" default:"config.toml"`
+	Verbose    bool   `short:"v" long:"verbose" description:"Show verbose debug information"`
+}
+
+func main() {
+	var opts Options
+	_, err := flags.Parse(&opts)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	cfg, err := config.Load(opts.ConfigPath)
+	if err != nil {
+		slog.Error("Error loading config", "error", err)
+		os.Exit(1)
+	}
+
+	ctx, cancel := app.MainContext()
+	defer cancel()
+
+	if err := run(ctx, cfg); err != nil {
+		slog.Error("Error running", "error", err)
+	}
+}
+
+func run(ctx context.Context, cfg *config.Config) error {
+	db, err := database.GetDatabase(cfg.Database)
+	if err != nil {
+		return fmt.Errorf("error getting DB connection: %w", err)
+	}
+
+	return runServer(ctx, cfg, db)
+}
+
+// runServer starts the server using the given configuration and initializes routes
+func runServer(
+	ctx context.Context,
+	cfg *config.Config,
+	db *repo.Queries) error {
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(time.Duration(cfg.Server.TaskTimeOutInSeconds) * time.Second)) // Use the longest timeout for all routes by default
+
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins: cfg.Server.AllowedCorsURLs,
+		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+	})
+	wrappedHandler := corsHandler.Handler(r)
+
+	routes.RegisterRoutes(r, db)
+
+	server := &http.Server{
+		Addr:              ":" + fmt.Sprint(cfg.Server.Port),
+		Handler:           wrappedHandler,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	go serve(cfg, server)
+	<-ctx.Done()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("Forced shutdown", "err", err)
+	}
+
+	return nil
+}
+
+func serve(cfg *config.Config, server *http.Server) {
+	if cfg.Server.EnableHTTPS {
+
+		// Note, this is to be used when running on a server, as opposed to a serverless platform
+		slog.Info("Starting HTTPS server")
+
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			Cache:      autocert.DirCache("certs"),
+			HostPolicy: autocert.HostWhitelist(cfg.Server.ServerDomain),
+		}
+
+		server.Addr = ":" + fmt.Sprint(cfg.Server.HTTPSPort)
+		server.TLSConfig = &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		}
+
+		// Serve HTTP redirect to HTTPS
+		go func() {
+			err := http.ListenAndServe(":"+fmt.Sprint(cfg.Server.Port), certManager.HTTPHandler(nil))
+			if err != nil {
+				slog.Error("Could not start HTTP server", "err", err)
+			}
+		}()
+
+		// Start HTTPS server
+		err := server.ListenAndServeTLS("", "")
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("Could not start HTTPS server", "err", err)
+		}
+		slog.Info("Listening on port " + fmt.Sprint(cfg.Server.HTTPSPort) + " with HTTPS enabled")
+	} else {
+		slog.Info("Starting HTTP server")
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("Could not start HTTP server", "err", err)
+		}
+	}
+}
