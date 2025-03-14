@@ -19,7 +19,7 @@ require (
 	github.com/coder/websocket v1.8.12 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

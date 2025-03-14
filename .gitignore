@@ -1,2 +1,4 @@
 cmd/config.toml
 cmd/cli
+.idea/
+../.idea/
