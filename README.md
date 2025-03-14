@@ -30,7 +30,7 @@ You can use the `gonew` tool to create a new project based on this template:
 go install golang.org/x/tools/cmd/gonew@latest
 
 # Create a new project based on this template
-gonew github.com/mhpenta/app github.com/yourusername/your-project
+gonew github.com/mhpenta/starterA github.com/yourusername/your-project
 ```
 
 ### Configuration
