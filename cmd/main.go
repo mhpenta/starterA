@@ -101,7 +101,7 @@ func runServer(
 func serve(cfg *config.Config, server *http.Server) {
 	if cfg.Server.EnableHTTPS {
 
-		// Note, this is to be used when running on a server, as opposed to a serverless platform
+		// Note, this is to be used when running on a server, as opposed to a serverless platform with automatic HTTPS support
 		slog.Info("Starting HTTPS server")
 
 		certManager := autocert.Manager{
