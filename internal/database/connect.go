@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"starterA/internal/config"
+	"starterA/internal/database/repo"
 	"time"
-	"youtubeMonitor/internal/config"
-	"youtubeMonitor/internal/database/repo"
 
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )

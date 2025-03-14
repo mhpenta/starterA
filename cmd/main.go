@@ -14,11 +14,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"starterA/internal/config"
+	"starterA/internal/database"
+	"starterA/internal/database/repo"
+	"starterA/internal/routes"
 	"time"
-	"youtubeMonitor/internal/config"
-	"youtubeMonitor/internal/database"
-	"youtubeMonitor/internal/database/repo"
-	"youtubeMonitor/internal/routes"
 )
 
 // Options defines command-line options for the application

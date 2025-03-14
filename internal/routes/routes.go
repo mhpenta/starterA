@@ -3,17 +3,17 @@ package routes
 import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"youtubeMonitor/internal/database/repo"
-	"youtubeMonitor/internal/handlers"
+	"starterA/internal/database/repo"
+	"starterA/internal/handlers"
 )
 
 // RegisterRoutes sets up all the routes for the application
 func RegisterRoutes(r *chi.Mux, db *repo.Queries) {
 	// No static files needed with Tailwind CSS via CDN
-	
+
 	// Register home route
 	r.Get("/", handlers.HomeHandler())
-	
+
 	// Register API routes
 	registerAPIRoutes(r, db)
 }
@@ -29,7 +29,7 @@ func registerAPIRoutes(r *chi.Mux, db *repo.Queries) {
 			r.Put("/{id}", handleUpdateUser(db))
 			r.Delete("/{id}", handleDeleteUser(db))
 		})
-		
+
 		// Add more API routes as needed
 	})
 }

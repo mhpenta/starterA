@@ -1,4 +1,4 @@
-module youtubeMonitor
+module starterA
 
 go 1.24.0
 

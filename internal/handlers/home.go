@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	"youtubeMonitor/internal/ui"
+	"starterA/internal/ui"
 )
 
 // HomeHandler renders the home page
