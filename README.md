@@ -1,6 +1,8 @@
 # Go Web Application Template
 
-A modern, scalable web application template built with Go. This template provides a solid foundation for developing web applications with a clean architecture, database integration, and responsive UI components.
+A simple but scalable web application template built with Go. This particular template is used for internal tools with maximum simplicity in mind.
+
+It provides a solid foundation for developing web applications with a simple architecture, simple database integration, and hypermedia driven UI components.
 
 ## Features
 
