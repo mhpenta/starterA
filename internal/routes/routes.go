@@ -4,7 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"youtubeMonitor/internal/database/repo"
-	"youtubeMonitor/internal/ui"
+	"youtubeMonitor/internal/handlers"
 )
 
 // RegisterRoutes sets up all the routes for the application
@@ -12,7 +12,7 @@ func RegisterRoutes(r *chi.Mux, db *repo.Queries) {
 	// No static files needed with Tailwind CSS via CDN
 	
 	// Register home route
-	r.Get("/", ui.HomeHandler())
+	r.Get("/", handlers.HomeHandler())
 	
 	// Register API routes
 	registerAPIRoutes(r, db)
