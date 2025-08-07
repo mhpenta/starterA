@@ -14,10 +14,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"starterA/internal/application"
 	"starterA/internal/config"
 	"starterA/internal/database"
-	"starterA/internal/database/repo"
 	"starterA/internal/routes"
+	"starterA/internal/service"
 	"time"
 )
 
@@ -54,14 +55,23 @@ func run(ctx context.Context, cfg *config.Config) error {
 		return fmt.Errorf("error getting DB connection: %w", err)
 	}
 
-	return runServer(ctx, cfg, db)
+	// Initialize logger
+	logger := slog.Default()
+
+	// Initialize service layer
+	svc := service.New(db, logger, cfg)
+
+	// Initialize application layer
+	a := application.New(svc, logger, cfg)
+
+	return runServer(ctx, cfg, a)
 }
 
 // runServer starts the server using the given configuration and initializes routes
 func runServer(
 	ctx context.Context,
 	cfg *config.Config,
-	db *repo.Queries) error {
+	a *application.Application) error {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -77,7 +87,7 @@ func runServer(
 	})
 	wrappedHandler := corsHandler.Handler(r)
 
-	routes.RegisterRoutes(r, db)
+	routes.RegisterRoutes(r, a)
 
 	server := &http.Server{
 		Addr:              ":" + fmt.Sprint(cfg.Server.Port),

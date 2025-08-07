@@ -2,8 +2,15 @@ package ui
 
 import (
 	. "maragu.dev/gomponents"
+	. "maragu.dev/gomponents/components"
 	. "maragu.dev/gomponents/html"
 )
+
+// PageData contains the data needed to render a complete page
+type PageData struct {
+	Title       string
+	Description string
+}
 
 // HomeData contains the data needed to render the home page
 type HomeData struct {
@@ -11,6 +18,20 @@ type HomeData struct {
 	Description           string
 	BackgroundInformation string
 	Colors                ColorScheme
+}
+
+// Page renders a complete HTML page with the given content
+func Page(pageData PageData, content Node) Node {
+	return HTML5(HTML5Props{
+		Title: pageData.Title,
+		Head: []Node{
+			Meta(Attr("name", "description"), Attr("content", pageData.Description)),
+			Raw(`<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>`),
+		},
+		Body: []Node{
+			content,
+		},
+	})
 }
 
 // MainContent renders the main content of the home page
