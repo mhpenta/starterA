@@ -95,7 +95,7 @@ func runServer(
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	go serve(cfg, server)
+	go serve(cfg, server, a.Logger)
 	<-ctx.Done()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -108,11 +108,11 @@ func runServer(
 	return nil
 }
 
-func serve(cfg *config.Config, server *http.Server) {
+func serve(cfg *config.Config, server *http.Server, logger *slog.Logger) {
 	if cfg.Server.EnableHTTPS {
 
 		// Note, this is to be used when running on a server, as opposed to a serverless platform with automatic HTTPS support
-		slog.Info("Starting HTTPS server")
+		logger.Info("Starting HTTPS server")
 
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
@@ -129,21 +129,21 @@ func serve(cfg *config.Config, server *http.Server) {
 		go func() {
 			err := http.ListenAndServe(":"+fmt.Sprint(cfg.Server.Port), certManager.HTTPHandler(nil))
 			if err != nil {
-				slog.Error("Could not start HTTP server", "err", err)
+				logger.Error("Could not start HTTP server", "err", err)
 			}
 		}()
 
 		// Start HTTPS server
 		err := server.ListenAndServeTLS("", "")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Could not start HTTPS server", "err", err)
+			logger.Error("Could not start HTTPS server", "err", err)
 		}
-		slog.Info("Listening on port " + fmt.Sprint(cfg.Server.HTTPSPort) + " with HTTPS enabled")
+		logger.Info("Listening on port " + fmt.Sprint(cfg.Server.HTTPSPort) + " with HTTPS enabled")
 	} else {
-		slog.Info("Starting HTTP server")
+		logger.Info("Starting HTTP server")
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Could not start HTTP server", "err", err)
+			logger.Error("Could not start HTTP server", "err", err)
 		}
 	}
 }
