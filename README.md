@@ -1,21 +1,16 @@
-# Go Web Application Template
+# Go Application Starter Template
 
-A simple but scalable web application template built with Go. This particular template is used for internal tools with maximum simplicity in mind.
-
-It provides a solid foundation for developing web applications using a layered service architecture pattern (popularized by Alex Edwards), simple database integration, and hypermedia driven UI components.
+A clean, transport-agnostic application template built with Go. Designed for flexibility - run as HTTP server, CLI, TUI, or MCP with the same core business logic.
 
 ## Features
 
-- **Layered Architecture**: Clean separation between business logic (service layer) and HTTP handling (application layer)
-- **Chi Router**: Fast and lightweight HTTP router for Go
-- **Turso Database**: SQL database with libsql client integration
-- **SQLC**: Type-safe SQL in Go with generated code
-- **Gomponents**: Declarative HTML views in Go
-- **Clean Configuration**: Environment-based configuration with cleanenv
-- **HTTPS Support**: Automatic TLS certificate management with Let's Encrypt
-- **CORS Support**: Configurable Cross-Origin Resource Sharing
-- **Structured Logging**: Logging with slog
-- **Graceful Shutdown**: Proper server shutdown handling
+- **Transport-Agnostic Architecture**: Core business logic separate from HTTP/CLI/TUI concerns
+- **Chi Router**: Fast HTTP router
+- **Turso Database**: SQL database with libsql client
+- **SQLC**: Type-safe SQL code generation
+- **Gomponents**: Type-safe HTML components
+- **HTTPS Support**: Automatic TLS with Let's Encrypt
+- **Graceful Shutdown**: Signal handling for clean exits
 
 ## Getting Started
 
@@ -23,18 +18,6 @@ It provides a solid foundation for developing web applications using a layered s
 
 - Go 1.21 or higher
 - Turso database account (for database functionality)
-
-### Installation
-
-You can use the `gonew` tool to create a new project based on this template:
-
-```bash
-# Install gonew if you haven't already
-go install golang.org/x/tools/cmd/gonew@latest
-
-# Create a new project based on this template
-gonew starterA github.com/yourusername/your-project
-```
 
 ### Configuration
 
@@ -77,58 +60,43 @@ go run ./cmd/main.go -c path/to/config.toml
 ├── cmd/
 │   └── main.go            # Application entry point
 ├── internal/
-│   ├── application/       # Application layer (HTTP handlers)
-│   │   ├── app.go         # Application struct and helpers
-│   │   ├── users.go       # User-related HTTP handlers
-│   │   └── home.go        # Home page handler
-│   ├── service/           # Service layer (business logic)
-│   │   └── service.go     # Service struct and business methods
-│   ├── config/            # Configuration handling
-│   ├── database/          # Database connection and queries
+│   ├── app/               # Dependency container (infrastructure)
+│   ├── service/           # Business logic (transport-agnostic)
+│   ├── handlers/
+│   │   └── http/          # HTTP transport layer
+│   ├── routes/            # HTTP route definitions
+│   ├── database/          # Database access
 │   │   ├── queries/       # SQL query files
 │   │   ├── repo/          # Generated code from sqlc
 │   │   └── schema/        # Database schema
-│   ├── routes/            # HTTP route definitions
-│   └── ui/                # UI components with gomponents
-├── ARCHITECTURE.md        # Detailed architecture documentation
+│   ├── config/            # Configuration
+│   └── ui/                # UI components
 ├── config.toml            # Configuration file
-├── go.mod                 # Go module definition
-├── go.sum                 # Go module checksums
 └── sqlc.yaml              # SQLC configuration
 ```
 
-## Database Management
+## Architecture
 
-This template uses [sqlc](https://sqlc.dev/) to generate type-safe Go code from SQL:
+Clean layered architecture with clear separation of concerns:
 
-```bash
-# Install sqlc
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-
-# Generate database code
-sqlc generate
 ```
+app (infrastructure) → service (business logic) → handlers (transport)
+```
+
+- **App** (`internal/app/`): Dependency container holding DB, Logger, Config, Context
+- **Service** (`internal/service/`): Transport-agnostic business logic
+- **Handlers** (`internal/handlers/`): Transport-specific adapters (HTTP, CLI, TUI, MCP)
+
+This design lets you expose the same business logic through multiple interfaces without code duplication.
 
 ## Development Workflow
 
-1. Define your database schema in `internal/database/schema/`
-2. Write SQL queries in `internal/database/queries/`
-3. Generate Go code with `sqlc generate`
-4. Add business logic to the service layer in `internal/service/`
-5. Create HTTP handlers in the application layer `internal/application/`
-6. Register routes in `internal/routes/`
-7. Create UI components in `internal/ui/`
-8. Configure your application in `config.toml`
-
-## Architecture
-
-This template follows a layered service architecture pattern:
-
-- **Service Layer** (`internal/service/`): Contains all business logic and dependencies
-- **Application Layer** (`internal/application/`): Handles HTTP-specific concerns
-- **Clean Separation**: Business logic is completely isolated from HTTP handling
-
-For more details, see [ARCHITECTURE.md](ARCHITECTURE.md)
+1. Define schema in `internal/database/schema/`
+2. Write queries in `internal/database/queries/`
+3. Generate code: `sqlc generate`
+4. Add business logic in `internal/service/`
+5. Add transport handlers in `internal/handlers/` (HTTP, CLI, etc.)
+6. Register HTTP routes in `internal/routes/`
 
 ## Technologies Used
 
