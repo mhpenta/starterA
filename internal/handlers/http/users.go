@@ -1,4 +1,4 @@
-package application
+package httphandlers
 
 import (
 	"encoding/json"
@@ -10,12 +10,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (app *Application) GetUsersHandler() http.HandlerFunc {
+// GetUsersHandler returns an HTTP handler for listing users
+func (h *HTTPHandlers) GetUsersHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Default pagination
 		limit := int64(100)
 		offset := int64(0)
-		
+
 		// Parse query parameters
 		if l := r.URL.Query().Get("limit"); l != "" {
 			if parsedLimit, err := strconv.ParseInt(l, 10, 64); err == nil && parsedLimit > 0 {
@@ -27,106 +28,110 @@ func (app *Application) GetUsersHandler() http.HandlerFunc {
 				offset = parsedOffset
 			}
 		}
-		
-		users, err := app.Service.GetUsers(r.Context(), limit, offset)
+
+		users, err := h.Service.GetUsers(r.Context(), limit, offset)
 		if err != nil {
-			app.serverError(w, err)
+			h.serverError(w, err)
 			return
 		}
 
-		app.respond(w, http.StatusOK, users)
+		h.respond(w, http.StatusOK, users)
 	}
 }
 
-func (app *Application) CreateUserHandler() http.HandlerFunc {
+// CreateUserHandler returns an HTTP handler for creating a user
+func (h *HTTPHandlers) CreateUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input service.CreateUserInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			app.badRequest(w, err)
+			h.badRequest(w, err)
 			return
 		}
 
-		user, err := app.Service.CreateUser(r.Context(), &input)
+		user, err := h.Service.CreateUser(r.Context(), &input)
 		if err != nil {
-			app.serverError(w, err)
+			h.serverError(w, err)
 			return
 		}
 
-		app.respond(w, http.StatusCreated, user)
+		h.respond(w, http.StatusCreated, user)
 	}
 }
 
-func (app *Application) GetUserHandler() http.HandlerFunc {
+// GetUserHandler returns an HTTP handler for getting a single user
+func (h *HTTPHandlers) GetUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			app.badRequest(w, err)
+			h.badRequest(w, err)
 			return
 		}
 
-		user, err := app.Service.GetUser(r.Context(), id)
+		user, err := h.Service.GetUser(r.Context(), id)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
-				app.notFound(w)
+				h.notFound(w)
 				return
 			}
-			app.serverError(w, err)
+			h.serverError(w, err)
 			return
 		}
 
-		app.respond(w, http.StatusOK, user)
+		h.respond(w, http.StatusOK, user)
 	}
 }
 
-func (app *Application) UpdateUserHandler() http.HandlerFunc {
+// UpdateUserHandler returns an HTTP handler for updating a user
+func (h *HTTPHandlers) UpdateUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			app.badRequest(w, err)
+			h.badRequest(w, err)
 			return
 		}
 
 		var input service.UpdateUserInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			app.badRequest(w, err)
+			h.badRequest(w, err)
 			return
 		}
 
-		user, err := app.Service.UpdateUser(r.Context(), id, &input)
+		user, err := h.Service.UpdateUser(r.Context(), id, &input)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
-				app.notFound(w)
+				h.notFound(w)
 				return
 			}
-			app.serverError(w, err)
+			h.serverError(w, err)
 			return
 		}
 
-		app.respond(w, http.StatusOK, user)
+		h.respond(w, http.StatusOK, user)
 	}
 }
 
-func (app *Application) DeleteUserHandler() http.HandlerFunc {
+// DeleteUserHandler returns an HTTP handler for deleting a user
+func (h *HTTPHandlers) DeleteUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			app.badRequest(w, err)
+			h.badRequest(w, err)
 			return
 		}
 
-		err = app.Service.DeleteUser(r.Context(), id)
+		err = h.Service.DeleteUser(r.Context(), id)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
-				app.notFound(w)
+				h.notFound(w)
 				return
 			}
-			app.serverError(w, err)
+			h.serverError(w, err)
 			return
 		}
 
-		app.respond(w, http.StatusNoContent, nil)
+		h.respond(w, http.StatusNoContent, nil)
 	}
 }

@@ -1,11 +1,12 @@
-package application
+package httphandlers
 
 import (
 	"net/http"
 	"starterA/internal/ui"
 )
 
-func (app *Application) HomeHandler() http.HandlerFunc {
+// HomeHandler returns an HTTP handler for the home page
+func (h *HTTPHandlers) HomeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		colors := ui.DefaultColorScheme()
 

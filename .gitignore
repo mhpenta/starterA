@@ -3,3 +3,4 @@ cmd/cli
 ../.idea/
 cmd.md
 main
+.claude

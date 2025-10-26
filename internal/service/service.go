@@ -6,21 +6,30 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"starterA/internal/config"
+	"starterA/internal/app"
 	"starterA/internal/database/repo"
 )
 
 type Service struct {
-	DB     *repo.Queries
+	Ctx    context.Context
+	App    *app.Application
 	Logger *slog.Logger
-	Config *config.Config
 }
 
-func New(db *repo.Queries, logger *slog.Logger, cfg *config.Config) *Service {
+func New(ctx context.Context, app *app.Application, logger *slog.Logger) *Service {
+
+	if logger == nil {
+		if app.Logger == nil {
+			logger = slog.Default()
+		} else {
+			logger = app.Logger
+		}
+	}
+
 	return &Service{
-		DB:     db,
+		Ctx:    ctx,
+		App:    app,
 		Logger: logger,
-		Config: cfg,
 	}
 }
 
@@ -32,7 +41,7 @@ type CreateUserInput struct {
 func (s *Service) CreateUser(ctx context.Context, input *CreateUserInput) (*repo.User, error) {
 	s.Logger.Info("Creating user", "username", input.Username, "email", input.Email)
 
-	user, err := s.DB.CreateUser(ctx, repo.CreateUserParams{
+	user, err := s.App.DB.CreateUser(ctx, repo.CreateUserParams{
 		Username: input.Username,
 		Email:    input.Email,
 	})
@@ -47,7 +56,7 @@ func (s *Service) CreateUser(ctx context.Context, input *CreateUserInput) (*repo
 func (s *Service) GetUsers(ctx context.Context, limit, offset int64) ([]repo.User, error) {
 	s.Logger.Info("Fetching users", "limit", limit, "offset", offset)
 
-	users, err := s.DB.ListUsers(ctx, repo.ListUsersParams{
+	users, err := s.App.DB.ListUsers(ctx, repo.ListUsersParams{
 		Limit:  limit,
 		Offset: offset,
 	})
@@ -62,7 +71,7 @@ func (s *Service) GetUsers(ctx context.Context, limit, offset int64) ([]repo.Use
 func (s *Service) GetUser(ctx context.Context, id int64) (*repo.User, error) {
 	s.Logger.Info("Fetching user", "id", id)
 
-	user, err := s.DB.GetUser(ctx, id)
+	user, err := s.App.DB.GetUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user not found")
@@ -82,7 +91,7 @@ type UpdateUserInput struct {
 func (s *Service) UpdateUser(ctx context.Context, id int64, input *UpdateUserInput) (*repo.User, error) {
 	s.Logger.Info("Updating user", "id", id)
 
-	user, err := s.DB.UpdateUser(ctx, repo.UpdateUserParams{
+	user, err := s.App.DB.UpdateUser(ctx, repo.UpdateUserParams{
 		ID:       id,
 		Username: input.Username,
 		Email:    input.Email,
@@ -101,7 +110,7 @@ func (s *Service) UpdateUser(ctx context.Context, id int64, input *UpdateUserInp
 func (s *Service) DeleteUser(ctx context.Context, id int64) error {
 	s.Logger.Info("Deleting user", "id", id)
 
-	err := s.DB.DeleteUser(ctx, id)
+	err := s.App.DB.DeleteUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("user not found")

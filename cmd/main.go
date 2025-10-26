@@ -8,17 +8,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jessevdk/go-flags"
-	"github.com/mhpenta/app"
 	"github.com/rs/cors"
 	"golang.org/x/crypto/acme/autocert"
 	"log/slog"
 	"net/http"
 	"os"
-	"starterA/internal/application"
+	"os/signal"
+	"starterA/internal/app"
 	"starterA/internal/config"
 	"starterA/internal/database"
+	httphandlers "starterA/internal/handlers/http"
 	"starterA/internal/routes"
 	"starterA/internal/service"
+	"syscall"
 	"time"
 )
 
@@ -41,11 +43,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx, cancel := app.MainContext()
+	ctx, cancel := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,  // os.Interrupt
+		syscall.SIGKILL, // os.Kill
+		syscall.SIGTERM)
 	defer cancel()
 
 	if err := run(ctx, cfg); err != nil {
-		slog.Error("Error running", "error", err)
+		slog.Error("Error running application", "error", err)
 	}
 }
 
@@ -58,20 +64,24 @@ func run(ctx context.Context, cfg *config.Config) error {
 	// Initialize logger
 	logger := slog.Default()
 
-	// Initialize service layer
-	svc := service.New(db, logger, cfg)
+	// Initialize application (dependency container)
+	a := app.New(ctx, logger, cfg, db)
 
-	// Initialize application layer
-	a := application.New(svc, logger, cfg)
+	// Initialize service layer (core business logic)
+	svc := service.New(ctx, a, a.Logger)
 
-	return runServer(ctx, cfg, a)
+	// Initialize HTTP handlers (transport layer for HTTP server)
+	httpHandlers := httphandlers.New(svc, logger)
+
+	return runServer(ctx, cfg, a, httpHandlers)
 }
 
 // runServer starts the server using the given configuration and initializes routes
 func runServer(
 	ctx context.Context,
 	cfg *config.Config,
-	a *application.Application) error {
+	a *app.Application,
+	httpHandlers *httphandlers.HTTPHandlers) error {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -87,7 +97,7 @@ func runServer(
 	})
 	wrappedHandler := corsHandler.Handler(r)
 
-	routes.RegisterRoutes(r, a)
+	routes.RegisterRoutes(r, httpHandlers)
 
 	server := &http.Server{
 		Addr:              ":" + fmt.Sprint(cfg.Server.Port),
