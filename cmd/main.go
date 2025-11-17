@@ -65,15 +65,15 @@ func run(ctx context.Context, cfg *config.Config) error {
 
 	svc := service.New(ctx, a, a.Logger)
 
-	httpHandlers := httphandlers.New(svc, logger)
+	httpHandlers := httphandlers.New(svc, a.Logger)
 
-	return runServer(ctx, cfg, a, httpHandlers)
+	return runServer(ctx, cfg.Server, a, httpHandlers)
 }
 
 // runServer starts the server using the given configuration and initializes routes
 func runServer(
 	ctx context.Context,
-	cfg *config.Config,
+	serverCfg config.Server,
 	a *app.Application,
 	httpHandlers *httphandlers.HTTPHandlers) error {
 
@@ -82,10 +82,10 @@ func runServer(
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(time.Duration(cfg.Server.TaskTimeOutInSeconds) * time.Second)) // Use the longest timeout for all routes by default
+	r.Use(middleware.Timeout(time.Duration(serverCfg.TaskTimeOutInSeconds) * time.Second)) // Use the longest timeout for all routes by default
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins: cfg.Server.AllowedCorsURLs,
+		AllowedOrigins: serverCfg.AllowedCorsURLs,
 		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"},
 		AllowedHeaders: []string{"*"},
 	})
@@ -94,12 +94,12 @@ func runServer(
 	routes.RegisterRoutes(r, httpHandlers)
 
 	server := &http.Server{
-		Addr:              ":" + fmt.Sprint(cfg.Server.Port),
+		Addr:              ":" + fmt.Sprint(serverCfg.Port),
 		Handler:           wrappedHandler,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	go serve(cfg, server, a.Logger)
+	go serve(serverCfg, server, a.Logger)
 	<-ctx.Done()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -112,8 +112,8 @@ func runServer(
 	return nil
 }
 
-func serve(cfg *config.Config, server *http.Server, logger *slog.Logger) {
-	if cfg.Server.EnableHTTPS {
+func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger) {
+	if serverConfig.EnableHTTPS {
 
 		// Note, this is to be used when running on a server, as opposed to a serverless platform with automatic HTTPS support
 		logger.Info("Starting HTTPS server")
@@ -121,17 +121,17 @@ func serve(cfg *config.Config, server *http.Server, logger *slog.Logger) {
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			Cache:      autocert.DirCache("certs"),
-			HostPolicy: autocert.HostWhitelist(cfg.Server.ServerDomain),
+			HostPolicy: autocert.HostWhitelist(serverConfig.ServerDomain),
 		}
 
-		server.Addr = ":" + fmt.Sprint(cfg.Server.HTTPSPort)
+		server.Addr = ":" + fmt.Sprint(serverConfig.HTTPSPort)
 		server.TLSConfig = &tls.Config{
 			GetCertificate: certManager.GetCertificate,
 		}
 
 		// Serve HTTP redirect to HTTPS
 		go func() {
-			err := http.ListenAndServe(":"+fmt.Sprint(cfg.Server.Port), certManager.HTTPHandler(nil))
+			err := http.ListenAndServe(":"+fmt.Sprint(serverConfig.Port), certManager.HTTPHandler(nil))
 			if err != nil {
 				logger.Error("Could not start HTTP server", "err", err)
 			}
@@ -142,7 +142,7 @@ func serve(cfg *config.Config, server *http.Server, logger *slog.Logger) {
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("Could not start HTTPS server", "err", err)
 		}
-		logger.Info("Listening on port " + fmt.Sprint(cfg.Server.HTTPSPort) + " with HTTPS enabled")
+		logger.Info("Listening on port " + fmt.Sprint(serverConfig.HTTPSPort) + " with HTTPS enabled")
 	} else {
 		logger.Info("Starting HTTP server")
 		err := server.ListenAndServe()
