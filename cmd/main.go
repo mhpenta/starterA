@@ -5,23 +5,23 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jessevdk/go-flags"
-	"github.com/rs/cors"
-	"golang.org/x/crypto/acme/autocert"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"starterA/internal/app"
 	"starterA/internal/config"
-	"starterA/internal/database"
 	httphandlers "starterA/internal/handlers/http"
 	"starterA/internal/routes"
 	"starterA/internal/service"
 	"syscall"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jessevdk/go-flags"
+	"github.com/rs/cors"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // Options defines command-line options for the application
@@ -45,8 +45,8 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
-		syscall.SIGINT,  // os.Interrupt
-		syscall.SIGKILL, // os.Kill
+		syscall.SIGINT,
+		syscall.SIGKILL,
 		syscall.SIGTERM)
 	defer cancel()
 
@@ -56,21 +56,15 @@ func main() {
 }
 
 func run(ctx context.Context, cfg *config.Config) error {
-	db, err := database.GetDatabase(cfg.Database)
-	if err != nil {
-		return fmt.Errorf("error getting DB connection: %w", err)
-	}
-
-	// Initialize logger
 	logger := slog.Default()
 
-	// Initialize application (dependency container)
-	a := app.New(ctx, logger, cfg, db)
+	a, err := app.New(ctx, logger, cfg)
+	if err != nil {
+		return fmt.Errorf("app initialization error: %w", err)
+	}
 
-	// Initialize service layer (core business logic)
 	svc := service.New(ctx, a, a.Logger)
 
-	// Initialize HTTP handlers (transport layer for HTTP server)
 	httpHandlers := httphandlers.New(svc, logger)
 
 	return runServer(ctx, cfg, a, httpHandlers)
