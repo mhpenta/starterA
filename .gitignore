@@ -4,3 +4,4 @@ cmd/cli
 cmd.md
 main
 .claude
+.DS_Store
