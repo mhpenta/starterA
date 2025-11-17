@@ -62,6 +62,12 @@ func run(ctx context.Context, cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("app initialization error: %w", err)
 	}
+	defer func(a *app.Application) {
+		err := a.Close()
+		if err != nil {
+			slog.Error("Error closing application", "error", err)
+		}
+	}(a)
 
 	svc := service.New(ctx, a, a.Logger)
 

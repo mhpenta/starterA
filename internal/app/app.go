@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"starterA/internal/config"
@@ -38,4 +39,33 @@ func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Applica
 		DB:     db,
 		DBConn: dbConn,
 	}, nil
+}
+
+func (a *Application) Close() error {
+	if a == nil {
+		return nil
+	}
+
+	var allErrors []error
+
+	if a.DBConn != nil {
+		if err := a.DBConn.Close(); err != nil {
+			allErrors = append(allErrors, fmt.Errorf("closing database: %w", err))
+		}
+		a.DBConn = nil
+	}
+
+	if len(allErrors) > 0 {
+		if a.Logger == nil {
+			a.Logger = slog.Default()
+		}
+		a.Logger.Warn("error closing application", "errors", len(allErrors))
+		for i, err := range allErrors {
+			a.Logger.Warn("Error", "id", i, "err", err.Error())
+		}
+
+		return errors.Join(allErrors...)
+	}
+
+	return nil
 }
