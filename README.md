@@ -5,10 +5,10 @@ Transport-agnostic Go template with HTTP server support. Core business logic sta
 ## Stack
 
 - **Chi** - HTTP router with middleware
-- **Turso** - SQLite database with libsql
+- **Turso** - SQLite database with libsql, easily swapped out for sqlite
 - **SQLC** - Type-safe SQL code generation
 - **Gomponents** - Type-safe HTML templating
-- **Let's Encrypt** - Automatic HTTPS (optional)
+**- **Let's Encrypt** - Automatic HTTPS (optional)**
 
 ## Quick Start
 
@@ -63,3 +63,7 @@ app (infrastructure) → service (business logic) → handlers (transport)
 4. Add business logic: `internal/service/`
 5. Add handlers: `internal/handlers/`
 6. Register routes: `internal/routes/`
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
