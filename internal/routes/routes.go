@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-chi/chi/v5"
-	httphandlers "starterA/internal/handlers/http"
+	httphandlers "github.com/mhpenta/starterA/internal/handlers/http"
 )
 
 // RegisterRoutes sets up all the routes for the application

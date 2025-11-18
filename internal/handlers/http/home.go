@@ -2,7 +2,8 @@ package httphandlers
 
 import (
 	"net/http"
-	"starterA/internal/ui"
+
+	"github.com/mhpenta/starterA/internal/ui"
 )
 
 // HomeHandler returns an HTTP handler for the home page

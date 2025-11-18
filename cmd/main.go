@@ -9,13 +9,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"starterA/internal/app"
-	"starterA/internal/config"
-	httphandlers "starterA/internal/handlers/http"
-	"starterA/internal/routes"
-	"starterA/internal/service"
 	"syscall"
 	"time"
+
+	"github.com/mhpenta/starterA/internal/app"
+	"github.com/mhpenta/starterA/internal/config"
+	httphandlers "github.com/mhpenta/starterA/internal/handlers/http"
+	"github.com/mhpenta/starterA/internal/routes"
+	"github.com/mhpenta/starterA/internal/service"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -120,8 +121,6 @@ func runServer(
 
 func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger) {
 	if serverConfig.EnableHTTPS {
-
-		// Note, this is to be used when running on a server, as opposed to a serverless platform with automatic HTTPS support
 		logger.Info("Starting HTTPS server")
 
 		certManager := autocert.Manager{

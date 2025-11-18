@@ -3,9 +3,10 @@ package httphandlers
 import (
 	"encoding/json"
 	"net/http"
-	"starterA/internal/service"
 	"strconv"
 	"strings"
+
+	"github.com/mhpenta/starterA/internal/service"
 
 	"github.com/go-chi/chi/v5"
 )

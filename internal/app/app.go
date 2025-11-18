@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/mhpenta/starterA/internal/config"
+	"github.com/mhpenta/starterA/internal/database"
+	"github.com/mhpenta/starterA/internal/database/repo"
 	"log/slog"
-	"starterA/internal/config"
-	"starterA/internal/database"
-	"starterA/internal/database/repo"
 )
 
 // Application is a dependency container for the application.
@@ -23,7 +23,7 @@ type Application struct {
 }
 
 // New creates a new Application instance with the provided dependencies
-func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Application, error) {
+func New(appCtx context.Context, logger *slog.Logger, cfg *config.Config) (*Application, error) {
 
 	dbConn, err := database.GetConnection(cfg.Database)
 	if err != nil {
@@ -33,7 +33,7 @@ func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Applica
 	db := repo.New(dbConn)
 
 	return &Application{
-		AppCtx: ctx,
+		AppCtx: appCtx,
 		Logger: logger,
 		Config: cfg,
 		DB:     db,

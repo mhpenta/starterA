@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"starterA/internal/config"
-	"starterA/internal/database/repo"
+	"github.com/mhpenta/starterA/internal/config"
+	"github.com/mhpenta/starterA/internal/database/repo"
 	"time"
 
 	_ "github.com/tursodatabase/libsql-client-go/libsql"

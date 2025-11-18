@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"starterA/internal/service"
+
+	"github.com/mhpenta/starterA/internal/service"
 )
 
 // HTTPHandlers handles HTTP-specific request/response logic

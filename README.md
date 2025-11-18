@@ -1,31 +1,35 @@
-# Go Application Starter Template
+# Go Application Starter
 
-A clean, transport-agnostic application template built with Go. Designed for flexibility - run as HTTP server, CLI, TUI, or MCP with the same core business logic.
+Transport-agnostic Go template with HTTP server support. Core business logic stays separate from transport layer - easily add CLI, TUI, or MCP interfaces later.
 
-## Features
+## Stack
 
-- **Transport-Agnostic Architecture**: Core business logic separate from HTTP/CLI/TUI concerns
-- **Chi Router**: Fast HTTP router
-- **Turso Database**: SQL database with libsql client
-- **SQLC**: Type-safe SQL code generation
-- **Gomponents**: Type-safe HTML components
-- **HTTPS Support**: Automatic TLS with Let's Encrypt
-- **Graceful Shutdown**: Signal handling for clean exits
+- **Chi** - HTTP router with middleware
+- **Turso** - SQLite database with libsql
+- **SQLC** - Type-safe SQL code generation
+- **Gomponents** - Type-safe HTML templating
+- **Let's Encrypt** - Automatic HTTPS (optional)
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+```bash
+# Run
+go run ./cmd/main.go
 
-- Go 1.21 or higher
-- Turso database account (for database functionality)
+# Build
+go build -o app ./cmd/main.go
 
-### Configuration
+# Custom config
+go run ./cmd/main.go -c path/to/config.toml
+```
 
-Create a `config.toml` file in your project root:
+## Configuration
+
+Edit `cmd/config.toml`:
 
 ```toml
 [Database]
-TursoConnectionString = "libsql://your-database-url.turso.io?authToken=your-auth-token"
+TursoConnectionString = "libsql://your-database.turso.io?authToken=your-token"
 
 [Server]
 Port = "8080"
@@ -37,73 +41,25 @@ TaskTimeOutInSeconds = 3600
 ServerDomain = "yourdomain.com"
 
 [App]
-Environment = "dev"  # Use "prod" for production
-```
-
-### Running the Application
-
-```bash
-# Build and run
-go build -o app ./cmd/main.go
-./app
-
-# Or use go run
-go run ./cmd/main.go
-
-# With custom config path
-go run ./cmd/main.go -c path/to/config.toml
-```
-
-## Project Structure
-
-```
-├── cmd/
-│   └── main.go            # Application entry point
-├── internal/
-│   ├── app/               # Dependency container (infrastructure)
-│   ├── service/           # Business logic (transport-agnostic)
-│   ├── handlers/
-│   │   └── http/          # HTTP transport layer
-│   ├── routes/            # HTTP route definitions
-│   ├── database/          # Database access
-│   │   ├── queries/       # SQL query files
-│   │   ├── repo/          # Generated code from sqlc
-│   │   └── schema/        # Database schema
-│   ├── config/            # Configuration
-│   └── ui/                # UI components
-├── config.toml            # Configuration file
-└── sqlc.yaml              # SQLC configuration
+Environment = "dev"
 ```
 
 ## Architecture
-
-Clean layered architecture with clear separation of concerns:
 
 ```
 app (infrastructure) → service (business logic) → handlers (transport)
 ```
 
-- **App** (`internal/app/`): Dependency container holding DB, Logger, Config, Context
-- **Service** (`internal/service/`): Transport-agnostic business logic
-- **Handlers** (`internal/handlers/`): Transport-specific adapters (HTTP, CLI, TUI, MCP)
+- `internal/app/` - Dependency container (DB, Logger, Config, Context)
+- `internal/service/` - Transport-agnostic business logic
+- `internal/handlers/` - Transport adapters (HTTP, CLI, TUI, etc.)
+- `internal/database/` - Database access with SQLC-generated code
 
-This design lets you expose the same business logic through multiple interfaces without code duplication.
+## Development
 
-## Development Workflow
-
-1. Define schema in `internal/database/schema/`
-2. Write queries in `internal/database/queries/`
+1. Define schema: `internal/database/schema/`
+2. Write queries: `internal/database/queries/`
 3. Generate code: `sqlc generate`
-4. Add business logic in `internal/service/`
-5. Add transport handlers in `internal/handlers/` (HTTP, CLI, etc.)
-6. Register HTTP routes in `internal/routes/`
-
-## Technologies Used
-
-- [Go](https://golang.org/)
-- [Chi Router](https://github.com/go-chi/chi)
-- [Turso Database](https://turso.tech/)
-- [SQLC](https://sqlc.dev/)
-- [Gomponents](https://github.com/maragudk/gomponents)
-- [cleanenv](https://github.com/ilyakaznacheev/cleanenv)
-- [autocert](https://golang.org/x/crypto/acme/autocert)
+4. Add business logic: `internal/service/`
+5. Add handlers: `internal/handlers/`
+6. Register routes: `internal/routes/`

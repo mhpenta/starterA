@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"starterA/internal/app"
-	"starterA/internal/database/repo"
+
+	"github.com/mhpenta/starterA/internal/app"
+	"github.com/mhpenta/starterA/internal/database/repo"
 )
 
 type Service struct {
