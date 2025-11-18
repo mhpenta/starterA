@@ -32,15 +32,18 @@ type Options struct {
 }
 
 func main() {
+	logger := slog.Default()
+
 	var opts Options
 	_, err := flags.Parse(&opts)
 	if err != nil {
+		logger.Error("Failed to parse flags", "error", err)
 		os.Exit(1)
 	}
 
 	cfg, err := config.Load(opts.ConfigPath)
 	if err != nil {
-		slog.Error("Error loading config", "error", err)
+		logger.Error("Error loading config", "error", err)
 		os.Exit(1)
 	}
 
@@ -51,13 +54,12 @@ func main() {
 		syscall.SIGTERM)
 	defer cancel()
 
-	if err := run(ctx, cfg); err != nil {
-		slog.Error("Error running application", "error", err)
+	if err := run(ctx, logger, cfg); err != nil {
+		logger.Error("Error running application", "error", err)
 	}
 }
 
-func run(ctx context.Context, cfg *config.Config) error {
-	logger := slog.Default()
+func run(ctx context.Context, logger *slog.Logger, cfg *config.Config) error {
 
 	a, err := app.New(ctx, logger, cfg)
 	if err != nil {
