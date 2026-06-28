@@ -2,9 +2,9 @@ package httphandlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/mhpenta/starterA/internal/service"
 
@@ -71,7 +71,7 @@ func (h *HTTPHandlers) GetUserHandler() http.HandlerFunc {
 
 		user, err := h.Service.GetUser(r.Context(), id)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if errors.Is(err, service.ErrUserNotFound) {
 				h.notFound(w)
 				return
 			}
@@ -101,7 +101,7 @@ func (h *HTTPHandlers) UpdateUserHandler() http.HandlerFunc {
 
 		user, err := h.Service.UpdateUser(r.Context(), id, &input)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if errors.Is(err, service.ErrUserNotFound) {
 				h.notFound(w)
 				return
 			}
@@ -125,7 +125,7 @@ func (h *HTTPHandlers) DeleteUserHandler() http.HandlerFunc {
 
 		err = h.Service.DeleteUser(r.Context(), id)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if errors.Is(err, service.ErrUserNotFound) {
 				h.notFound(w)
 				return
 			}

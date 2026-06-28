@@ -35,7 +35,6 @@ TursoConnectionString = "libsql://your-database.turso.io?authToken=your-token"
 Port = "8080"
 EnableHTTPS = false
 HTTPSPort = "443"
-TimeOutInSeconds = 60
 AllowedCorsURLs = ["http://localhost:3000"]
 TaskTimeOutInSeconds = 3600
 ServerDomain = "yourdomain.com"
@@ -54,6 +53,7 @@ app (infrastructure) → service (business logic) → handlers (transport)
 - `internal/service/` - Transport-agnostic business logic
 - `internal/handlers/` - Transport adapters (HTTP, CLI, TUI, etc.)
 - `internal/database/` - Database access with SQLC-generated code
+- `internal/auth/` - Optional provider-agnostic auth contract, middleware, and mock provider
 
 ## Development
 

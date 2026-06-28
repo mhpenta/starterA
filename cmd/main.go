@@ -108,8 +108,16 @@ func runServer(
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	go serve(serverCfg, server, a.Logger)
-	<-ctx.Done()
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- serve(serverCfg, server, a.Logger)
+	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errChan:
+		return err
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -121,7 +129,7 @@ func runServer(
 	return nil
 }
 
-func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger) {
+func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger) error {
 	if serverConfig.EnableHTTPS {
 		logger.Info("Starting HTTPS server")
 
@@ -139,7 +147,7 @@ func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger)
 		// Serve HTTP redirect to HTTPS
 		go func() {
 			err := http.ListenAndServe(":"+fmt.Sprint(serverConfig.Port), certManager.HTTPHandler(nil))
-			if err != nil {
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
 				logger.Error("Could not start HTTP server", "err", err)
 			}
 		}()
@@ -147,14 +155,16 @@ func serve(serverConfig config.Server, server *http.Server, logger *slog.Logger)
 		// Start HTTPS server
 		err := server.ListenAndServeTLS("", "")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Could not start HTTPS server", "err", err)
+			return fmt.Errorf("could not start HTTPS server: %w", err)
 		}
 		logger.Info("Listening on port " + fmt.Sprint(serverConfig.HTTPSPort) + " with HTTPS enabled")
 	} else {
 		logger.Info("Starting HTTP server")
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Could not start HTTP server", "err", err)
+			return fmt.Errorf("could not start HTTP server: %w", err)
 		}
 	}
+
+	return nil
 }

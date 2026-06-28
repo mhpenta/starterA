@@ -2,10 +2,9 @@
 Port = "8080"
 EnableHTTPS = false
 HTTPSPort = "443"
-TimeOutInSeconds = 60
 AllowedCorsURLs = ["http://localhost:3000", "https://example.com"]
 TaskTimeOutInSeconds = 3600
-ServerDomain = "https://example.com"
+ServerDomain = "example.com"
 
 [App]
 Environment = "dev"

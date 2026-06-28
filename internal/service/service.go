@@ -17,6 +17,8 @@ type Service struct {
 	Logger *slog.Logger
 }
 
+var ErrUserNotFound = errors.New("user not found")
+
 func New(ctx context.Context, app *app.Application, logger *slog.Logger) *Service {
 
 	if logger == nil {
@@ -75,7 +77,7 @@ func (s *Service) GetUser(ctx context.Context, id int64) (*repo.User, error) {
 	user, err := s.App.DB.GetUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+			return nil, ErrUserNotFound
 		}
 		s.Logger.Error("Failed to fetch user", "error", err)
 		return nil, fmt.Errorf("failed to fetch user: %w", err)
@@ -99,7 +101,7 @@ func (s *Service) UpdateUser(ctx context.Context, id int64, input *UpdateUserInp
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user not found")
+			return nil, ErrUserNotFound
 		}
 		s.Logger.Error("Failed to update user", "error", err)
 		return nil, fmt.Errorf("failed to update user: %w", err)
@@ -114,7 +116,7 @@ func (s *Service) DeleteUser(ctx context.Context, id int64) error {
 	err := s.App.DB.DeleteUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("user not found")
+			return ErrUserNotFound
 		}
 		s.Logger.Error("Failed to delete user", "error", err)
 		return fmt.Errorf("failed to delete user: %w", err)
