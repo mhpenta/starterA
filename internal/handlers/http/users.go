@@ -51,6 +51,10 @@ func (h *HTTPHandlers) CreateUserHandler() http.HandlerFunc {
 
 		user, err := h.Service.CreateUser(r.Context(), &input)
 		if err != nil {
+			if errors.Is(err, service.ErrInvalidUserInput) {
+				h.badRequest(w, err)
+				return
+			}
 			h.serverError(w, err)
 			return
 		}
@@ -101,6 +105,10 @@ func (h *HTTPHandlers) UpdateUserHandler() http.HandlerFunc {
 
 		user, err := h.Service.UpdateUser(r.Context(), id, &input)
 		if err != nil {
+			if errors.Is(err, service.ErrInvalidUserInput) {
+				h.badRequest(w, err)
+				return
+			}
 			if errors.Is(err, service.ErrUserNotFound) {
 				h.notFound(w)
 				return
